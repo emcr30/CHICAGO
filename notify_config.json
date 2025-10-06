@@ -1,0 +1,13 @@
+{
+  "email": {
+    "smtp_host": "smtp.example.com",
+    "smtp_port": 587,
+    "username": "your-smtp-username",
+    "password": "your-smtp-password",
+    "from_addr": "alerts@example.com",
+    "recipients": ["you@example.com"]
+  },
+  "webhook": {
+    "url": "https://hooks.example.com/your-webhook-url"
+  }
+}
