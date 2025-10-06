@@ -1,13 +1,13 @@
 {
   "email": {
-    "smtp_host": "smtp.example.com",
+    "smtp_host": "smtp.gmail.com",
     "smtp_port": 587,
-    "username": "your-smtp-username",
-    "password": "your-smtp-password",
-    "from_addr": "alerts@example.com",
-    "recipients": ["you@example.com"]
+    "username": "lacucarachanoquierecaminar85@gmail.com",
+    "password": "piunxhmyenrayrrz",
+    "from_addr": "lacucarachanoquierecaminar85@gmail.com",
+    "recipients": ["echipanar@ulasalle.edu.pe"]
   },
   "webhook": {
-    "url": "https://hooks.example.com/your-webhook-url"
+    "url": ""
   }
 }

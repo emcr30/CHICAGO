@@ -1,4 +1,4 @@
-# Chicago crimes visualization (Streamlit)
+# CrimeGO
 
 Este proyecto crea una app Streamlit que consume la API pública de la ciudad de Chicago y permite: 
 
