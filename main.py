@@ -1,175 +1,266 @@
 import streamlit as st
 import pandas as pd
-from data import fetch_latest, generate_random_records, add_records_to_session, persist_dataframe_to_sqlite
-from viz import show_primary_type_bar, show_map_points_and_heat, show_additional_charts, calculate_hotspots
-from auth import verify_user, create_user, is_admin
-import sqlite3
-from db import persist_alerts, ensure_alerts_table, list_alerts
-from notify import send_email, send_webhook, load_config
-
+import requests
+try:
+    # prefer package imports when running from repo root
+    import CHICAGO.data as data_module
+    from CHICAGO.viz import show_primary_type_bar, show_map_points_and_heat, show_additional_charts
+    from CHICAGO.auth import admin_login_ui, admin_logout
+except Exception:
+    # fallback to local imports when running inside CHICAGO/ folder
+    import data as data_module
+    from viz import show_primary_type_bar, show_map_points_and_heat, show_additional_charts
+    from auth import admin_login_ui, admin_logout
+import inspect
 
 DEFAULT_LIMIT = 5000
 
+# Definir zonas de Arequipa
+AREQUIPA_ZONES = {
+    "Centro Histórico": {
+        "bounds": [
+            (-16.424240, -71.556179),
+            (-16.424528, -71.556496),
+            (-16.423735, -71.557225),
+            (-16.423735, -71.557225)
+        ],
+        "center": (-16.424060, -71.556775)
+    },
+    "Yanahuara": {
+        "bounds": [
+            (-16.390, -71.545),
+            (-16.395, -71.550),
+            (-16.400, -71.545),
+            (-16.395, -71.540)
+        ],
+        "center": (-16.395, -71.545)
+    }
+}
+
+# admin auth is handled by auth.admin_login_ui() and auth.admin_logout()
+
+def admin_panel():
+    """Panel de control para administradores"""
+    st.sidebar.markdown("---")
+    st.sidebar.success("✅ Sesión: Administrador")
+    
+    if st.sidebar.button("Cerrar Sesión"):
+        # use auth helper to clear admin session
+        admin_logout()
+        st.experimental_rerun()
+    
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("⚙️ Panel de Administración")
+    
+    # Selección de zona
+    zone_name = st.sidebar.selectbox(
+        "Zona de Arequipa",
+        options=list(AREQUIPA_ZONES.keys())
+    )
+    
+    zone_info = AREQUIPA_ZONES[zone_name]
+    
+    # Generar datos sintéticos
+    st.sidebar.markdown("### 📊 Generar Datos")
+    inject_count = st.sidebar.number_input(
+        'Registros sintéticos',
+        min_value=10,
+        max_value=1000,
+        value=50,
+        step=10
+    )
+    
+    crime_types = st.sidebar.multiselect(
+        "Tipos de crimen",
+        options=['ROBO', 'ASALTO', 'HURTO', 'VANDALISMO', 'VIOLENCIA FAMILIAR'],
+        default=['ROBO', 'ASALTO', 'HURTO']
+    )
+    
+    if st.sidebar.button('🎲 Generar Datos en Zona'):
+        # choose an appropriate generator function
+        if hasattr(data_module, 'generate_random_records_in_zone'):
+            gen_fn = getattr(data_module, 'generate_random_records_in_zone')
+            # function signature expected: n, zone_bounds, crime_types, ...
+            synth = gen_fn(n=int(inject_count), zone_bounds=zone_info["bounds"], crime_types=crime_types if crime_types else None)
+        else:
+            # fallback to simple generator that only takes n (generate_random_records)
+            gen_fn = getattr(data_module, 'generate_random_records')
+            synth = gen_fn(int(inject_count))
+
+        # use the session adder available in the module
+        add_fn = getattr(data_module, 'add_records_to_session')
+        add_fn(synth)
+        st.sidebar.success(f'{len(synth)} registros generados en {zone_name}')
+        st.rerun()
+    
+    # Gestión de base de datos
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 💾 Base de Datos")
+    
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        if st.button('Guardar', use_container_width=True):
+            df = st.session_state.get('_chicago_last_df', pd.DataFrame())
+            if not df.empty:
+                # persist using function from data module
+                persist_fn = getattr(data_module, 'persist_dataframe_to_sqlite')
+                persist_fn(df)
+                st.sidebar.success('✅ Guardado')
+            else:
+                st.sidebar.warning('No hay datos')
+    
+    with col2:
+        if st.button('Limpiar', use_container_width=True):
+            import os
+            try:
+                os.remove('chicago.db')
+                st.sidebar.success(' DB eliminada')
+            except FileNotFoundError:
+                st.sidebar.info('No existe DB')
+            except Exception as e:
+                st.sidebar.error(f'Error: {e}')
+    
+    # Exportar datos
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 📤 Exportar Datos")
+    
+    df = st.session_state.get('_chicago_last_df', pd.DataFrame())
+    if not df.empty:
+        csv = df.to_csv(index=False).encode('utf-8')
+        st.sidebar.download_button(
+            label="Descargar CSV",
+            data=csv,
+            file_name=f"crimenes_arequipa_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+    
+    return zone_name, zone_info
+
+def public_view():
+    """Vista pública sin controles de administrador"""
+    st.sidebar.info(" Vista Pública")
+    st.sidebar.markdown("Los datos se actualizan automáticamente")
+    
+    # Botón de login discreto
+    if st.sidebar.button("Acceso Administrador"):
+        st.rerun()
 
 def app():
-    st.set_page_config(page_title='Chicago Crimes - Streamlit', layout='wide')
-    st.title('Visualizador de datos de Chicago (últimos registros)')
-
+    st.set_page_config(
+        page_title='Sistema de Alertas - Arequipa',
+        layout='wide',
+        initial_sidebar_state='expanded'
+    )
+    
+    st.title('CRIMENGO')
+    
+    # Verificar si es admin
+    is_admin = admin_login_ui()
+    
+    # Mostrar panel correspondiente
+    if is_admin:
+        zone_name, zone_info = admin_panel()
+    else:
+        public_view()
+        zone_name = "Centro Histórico"
+        zone_info = AREQUIPA_ZONES[zone_name]
+    
+    # Configuración de datos
     with st.sidebar:
-        st.header('Controles')
-        limit = st.number_input('Últimos registros a traer', min_value=100, max_value=50000, value=DEFAULT_LIMIT, step=100)
-        auto_refresh = st.checkbox('Auto-refresh cada 60s', value=True)
-        force_refresh = st.button('Forzar refresco ahora')
-        st.markdown('---')
-        st.subheader('Autenticación')
-        if '_user' not in st.session_state:
-            st.session_state['_user'] = None
-        if st.session_state.get('_user') is None:
-            username = st.text_input('Usuario')
-            password = st.text_input('Contraseña', type='password')
-            if st.button('Ingresar'):
-                if verify_user(username, password):
-                    st.session_state['_user'] = username
-                    st.success(f'Ingresado como {username}')
-                else:
-                    st.error('Credenciales inválidas')
-            st.markdown('Registrarse (crear cuenta local)')
-            new_user = st.text_input('Nuevo usuario')
-            new_pass = st.text_input('Nueva contraseña', type='password')
-            if st.button('Crear usuario'):
-                ok = create_user(new_user, new_pass)
-                if ok:
-                    st.success('Usuario creado. Ahora ingrese con sus credenciales.')
-                else:
-                    st.error('Usuario ya existe')
+        st.markdown("---")
+        st.subheader("📡 Configuración")
+        limit = st.number_input(
+            'Registros a mostrar',
+            min_value=100,
+            max_value=10000,
+            value=2000,
+            step=100
+        )
+        
+        if is_admin:
+            auto_refresh = st.checkbox('Auto-refresh 60s', value=False)
+            force_refresh = st.button('🔄 Refrescar Ahora')
         else:
-            st.write(f'Usuario: {st.session_state.get("_user")}')
-            if st.button('Cerrar sesión'):
-                st.session_state['_user'] = None
-
-        st.markdown('---')
-        st.subheader('Filtros de visualización')
-        # enable optional date filters
-        use_date_filter = st.checkbox('Activar filtro de fecha', value=False)
-        if use_date_filter:
-            min_date = st.date_input('Fecha desde')
-            max_date = st.date_input('Fecha hasta')
+            auto_refresh = True
+            force_refresh = False
+    
+    # Obtener datos
+    fetch_fn = getattr(data_module, 'fetch_latest')
+    df = fetch_fn(
+        limit=int(limit),
+        force=force_refresh,
+        refresh_interval=60 if auto_refresh else 999999
+    )
+    
+    # Métricas principales
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Registros", len(df))
+    
+    with col2:
+        if 'date' in df.columns and not df['date'].isna().all():
+            latest = df['date'].max()
+            st.metric("Último Reporte", latest.strftime('%d/%m/%Y %H:%M') if pd.notna(latest) else 'N/A')
         else:
-            min_date = None
-            max_date = None
-
-        st.markdown('---')
-        st.subheader('Inyectar datos desde UI o código')
-        inject_count = st.number_input('Cantidad sintética (UI)', min_value=1, max_value=10000, value=10)
-        home_lat = st.number_input('Latitud base (opcional)', format="%.6f", value=0.0)
-        home_lon = st.number_input('Longitud base (opcional)', format="%.6f", value=0.0)
-        use_home = st.checkbox('Usar lat/lon base (UI)', value=False)
-        btn_inject = st.button('Generar e inyectar (UI)')
-
-        st.markdown('---')
-        st.subheader('Persistencia y DB')
-        persist_db = st.button('Persistir en SQLite (append)')
-        clear_db = st.button('Eliminar DB local (chicago.db)')
-
-    # always fetch latest on load or when forced
-    df = fetch_latest(limit=int(limit), force=force_refresh, refresh_interval=60 if auto_refresh else 999999)
-
-    # apply simple filters
-    try:
-        if min_date is not None:
-            df = df[df['date'] >= pd.to_datetime(min_date)]
-        if max_date is not None:
-            df = df[df['date'] <= pd.to_datetime(max_date)]
-    except Exception:
-        pass
-    # primary type options population
-    all_types = sorted(df['primary_type'].dropna().unique().tolist())
-    # use previous selection from session state if present
-    prev_sel = st.session_state.get('_primary_type_sel', [])
-    sel = st.sidebar.multiselect('Primary Type', options=all_types, default=prev_sel or all_types[:5])
-    st.session_state['_primary_type_sel'] = sel
-    if sel:
-        df = df[df['primary_type'].isin(sel)]
-
-    # code-based injection area: allow the user to paste or run a small snippet
-    st.sidebar.markdown('---')
-    st.sidebar.caption('Inyección desde código: usa `add_records_to_session(df)` desde un script local o aquí en dev')
-
-    if btn_inject:
-        base_lat = None
-        base_lon = None
-        if use_home and (home_lat != 0.0 or home_lon != 0.0):
-            base_lat = float(home_lat)
-            base_lon = float(home_lon)
-        synth = generate_random_records(int(inject_count), base_lat, base_lon)
-        add_records_to_session(synth)
-        df = st.session_state.get('_chicago_last_df', df)
-        st.success(f'Se inyectaron {len(synth)} registros sintéticos (UI)')
-
-    if persist_db:
-        persist_dataframe_to_sqlite(df)
-        st.success('Datos persistidos en chicago.db')
-
-    if clear_db:
-        import os
-        try:
-            os.remove('chicago.db')
-            st.success('Archivo chicago.db eliminado')
-        except FileNotFoundError:
-            st.info('No existía chicago.db')
-        except Exception as e:
-            st.error(f'No se pudo eliminar chicago.db: {e}')
-
-    st.header('Datos y visualizaciones')
-    st.write(f'Registros en memoria: {len(df)}')
-    st.dataframe(df.head(200))
-
-    # charts
-    show_primary_type_bar(df)
-    show_additional_charts(df)
-    hotspots = show_map_points_and_heat(df, heat_threshold=50)
-
-    # admin panel: allow persisting hotspot alerts
-    user = st.session_state.get('_user')
-    if user and is_admin(user):
-        st.markdown('---')
-        st.subheader('Panel admin: alertas y acciones')
-        round_digits = st.number_input('Hotspot rounding digits (granularity)', min_value=2, max_value=5, value=3)
-        min_count = st.number_input('Min incidents to consider hotspot', min_value=1, max_value=1000, value=50)
-        if st.button('Calcular hotspots (admin)'):
-            hs = calculate_hotspots(df, round_digits=round_digits, min_count=min_count)
-            st.dataframe(hs)
-            if not hs.empty:
-                if st.button('Persistir alertas en DB'):
-                    try:
-                        hs['created_at'] = pd.Timestamp.utcnow()
-                        persist_alerts(hs)
-                        st.success(f'Persistidas {len(hs)} alertas en tabla alerts')
-                    except Exception as e:
-                        st.error(f'No se pudo persistir alertas: {e}')
-                if st.button('Enviar alertas (email/webhook)'):
-                    cfg = load_config()
-                    body = f'Hotspots detectados:\n{hs.to_csv(index=False)}'
-                    # try email
-                    try:
-                        if cfg.get('email') and cfg['email'].get('recipients'):
-                            send_email('Hotspots Chicago', body, cfg['email'].get('recipients'))
-                            st.success('Correo enviado a destinatarios configurados')
-                    except Exception as e:
-                        st.error(f'Error enviando email: {e}')
-                    try:
-                        if cfg.get('webhook') and cfg['webhook'].get('url'):
-                            send_webhook({'text': 'Hotspots detectados', 'hotspots': hs.to_dict(orient='records')})
-                            st.success('Webhook enviado')
-                    except Exception as e:
-                        st.error(f'Error enviando webhook: {e}')
-                if st.button('Ver alertas persistidas'):
-                    try:
-                        out = list_alerts(200)
-                        st.dataframe(out)
-                    except Exception as e:
-                        st.error(f'No se pudo leer alertas: {e}')
-
+            st.metric("Último Reporte", "N/A")
+    
+    with col3:
+        arrests = df['arrest'].sum() if 'arrest' in df.columns else 0
+        st.metric("Arrestos", int(arrests))
+    
+    with col4:
+        domestic = df['domestic'].sum() if 'domestic' in df.columns else 0
+        st.metric("Domésticos", int(domestic))
+    
+    # Tabs para organizar contenido
+    tab1, tab2, tab3 = st.tabs(["Mapa", "Estadísticas", "Datos"])
+    
+    with tab1:
+        st.subheader(f"Mapa de Incidentes - {zone_name}")
+        show_map_points_and_heat(df, heat_threshold=30)
+    
+    with tab2:
+        col1, col2 = st.columns(2)
+        with col1:
+            show_primary_type_bar(df)
+        with col2:
+            show_additional_charts(df)
+    
+    with tab3:
+        st.subheader("Tabla de Datos")
+        
+        # Filtros
+        col1, col2 = st.columns(2)
+        with col1:
+            if 'primary_type' in df.columns:
+                types = st.multiselect(
+                    "Filtrar por tipo",
+                    options=df['primary_type'].dropna().unique(),
+                    default=None
+                )
+                if types:
+                    df = df[df['primary_type'].isin(types)]
+        
+        with col2:
+            if 'arrest' in df.columns:
+                show_arrests = st.checkbox("Solo con arresto", value=False)
+                if show_arrests:
+                    df = df[df['arrest'] == True]
+        
+        st.dataframe(
+            df,
+            use_container_width=True,
+            height=400
+        )
+        
+        # Info adicional solo para admin
+        if is_admin:
+            with st.expander("ℹ️ Información Técnica"):
+                st.write("**Columnas disponibles:**", list(df.columns))
+                st.write("**Registros nulos por columna:**")
+                st.write(df.isnull().sum())
 
 if __name__ == '__main__':
     app()

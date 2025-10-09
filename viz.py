@@ -50,19 +50,15 @@ def show_map_points_and_heat(df: pd.DataFrame, heat_threshold: int = 50):
     # Simple intensity alert: if any coarse bin had > heat_threshold incidents, highlight
     try:
         bins = mdf.copy()
-        # use configurable bin size for granularity
-        bins['lat_bin'] = bins['latitude'].round(3)
-        bins['lon_bin'] = bins['longitude'].round(3)
+        bins['lat_bin'] = bins['latitude'].round(2)
+        bins['lon_bin'] = bins['longitude'].round(2)
         grouped = bins.groupby(['lat_bin', 'lon_bin']).size().reset_index(name='count')
-        hotspots = grouped[grouped['count'] > heat_threshold].sort_values('count', ascending=False)
+        hotspots = grouped[grouped['count'] > heat_threshold]
         if not hotspots.empty:
             st.warning(f'Se detectaron {len(hotspots)} zonas con más de {heat_threshold} delitos (coarse bins).')
             st.dataframe(hotspots)
-            return hotspots
-        return pd.DataFrame(columns=['lat_bin', 'lon_bin', 'count'])
     except Exception as e:
         st.write('No se pudo calcular hotspots:', e)
-        return pd.DataFrame(columns=['lat_bin', 'lon_bin', 'count'])
 
 
 def show_additional_charts(df: pd.DataFrame):
@@ -72,18 +68,3 @@ def show_additional_charts(df: pd.DataFrame):
         st.bar_chart(top)
     except Exception:
         st.write('No se pudo generar top ubicaciones')
-
-
-def calculate_hotspots(df: pd.DataFrame, round_digits: int = 3, min_count: int = 50):
-    """Return hotspots dataframe with columns lat_bin, lon_bin, count"""
-    mdf = df.dropna(subset=['latitude', 'longitude']).copy()
-    if mdf.empty:
-        return pd.DataFrame(columns=['lat_bin', 'lon_bin', 'count'])
-    try:
-        mdf['lat_bin'] = mdf['latitude'].round(round_digits)
-        mdf['lon_bin'] = mdf['longitude'].round(round_digits)
-        grouped = mdf.groupby(['lat_bin', 'lon_bin']).size().reset_index(name='count')
-        hotspots = grouped[grouped['count'] >= min_count].sort_values('count', ascending=False)
-        return hotspots
-    except Exception:
-        return pd.DataFrame(columns=['lat_bin', 'lon_bin', 'count'])
