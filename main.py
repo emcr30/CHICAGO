@@ -50,7 +50,7 @@ def admin_panel():
         st.experimental_rerun()
     
     st.sidebar.markdown("---")
-    st.sidebar.subheader("⚙️ Panel de Administración")
+    st.sidebar.subheader("Panel de Administración")
     
     # Selección de zona
     zone_name = st.sidebar.selectbox(
@@ -95,7 +95,7 @@ def admin_panel():
     
     # Gestión de base de datos
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### 💾 Base de Datos")
+    st.sidebar.markdown("### Base de Datos")
     
     col1, col2 = st.sidebar.columns(2)
     with col1:
@@ -105,7 +105,7 @@ def admin_panel():
                 # persist using function from data module
                 persist_fn = getattr(data_module, 'persist_dataframe_to_sqlite')
                 persist_fn(df)
-                st.sidebar.success('✅ Guardado')
+                st.sidebar.success(' Guardado')
             else:
                 st.sidebar.warning('No hay datos')
     
@@ -180,7 +180,7 @@ def app():
         
         if is_admin:
             auto_refresh = st.checkbox('Auto-refresh 60s', value=False)
-            force_refresh = st.button('🔄 Refrescar Ahora')
+            force_refresh = st.button(' Refrescar Ahora')
         else:
             auto_refresh = True
             force_refresh = False

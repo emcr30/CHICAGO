@@ -244,13 +244,6 @@ def persist_dataframe_to_sqlite(df: pd.DataFrame, db_path: str = 'chicago.db', t
 
 
 def add_records_to_session(df: pd.DataFrame, is_arequipa: bool = False) -> None:
-    """
-    Añade registros al estado de la sesión.
-    
-    Args:
-        df: DataFrame con los registros a añadir
-        is_arequipa: Si True, los registros son de Arequipa y se almacenan por separado
-    """
     if is_arequipa:
         key = '_arequipa_records'
         existing = st.session_state.get(key, pd.DataFrame(columns=SCHEMA_COLUMNS))
