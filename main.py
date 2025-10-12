@@ -1,22 +1,25 @@
 import streamlit as st
 import pandas as pd
 import requests
+from typing import Any, Tuple
 try:
     # prefer package imports when running from repo root
     import CHICAGO.data as data_module
     from CHICAGO.viz import show_primary_type_bar, show_map_points_and_heat, show_additional_charts
     from CHICAGO.auth import admin_login_ui, admin_logout
+    from CHICAGO.db_postgres import insert_crimes
 except Exception:
     # fallback to local imports when running inside CHICAGO/ folder
     import data as data_module
     from viz import show_primary_type_bar, show_map_points_and_heat, show_additional_charts
     from auth import admin_login_ui, admin_logout
+    from db_postgres import insert_crimes
 import inspect
 
-DEFAULT_LIMIT = 5000
+DEFAULT_LIMIT: int = 5000
 
 # Definir zonas de Arequipa
-AREQUIPA_ZONES = {
+AREQUIPA_ZONES: dict[str, dict[str, Any]] = {
     "Centro Histórico": {
         "bounds": [
             (-16.424240, -71.556179),
@@ -39,7 +42,7 @@ AREQUIPA_ZONES = {
 
 # admin auth is handled by auth.admin_login_ui() and auth.admin_logout()
 
-def admin_panel():
+def admin_panel() -> Tuple[str, dict[str, Any]]:
     """Panel de control para administradores"""
     st.sidebar.markdown("---")
     st.sidebar.success("✅ Sesión: Administrador")
@@ -69,29 +72,37 @@ def admin_panel():
         value=50,
         step=10
     )
-    
     crime_types = st.sidebar.multiselect(
         "Tipos de crimen",
         options=['ROBO', 'ASALTO', 'HURTO', 'VANDALISMO', 'VIOLENCIA FAMILIAR'],
         default=['ROBO', 'ASALTO', 'HURTO']
     )
-    
-    if st.sidebar.button('🎲 Generar Datos en Zona'):
-        # choose an appropriate generator function
+    if st.sidebar.button('🎲 Generar Datos en Zona (PostgreSQL)'):
+        # Generar datos sintéticos y guardarlos en PostgreSQL
         if hasattr(data_module, 'generate_random_records_in_zone'):
             gen_fn = getattr(data_module, 'generate_random_records_in_zone')
-            # function signature expected: n, zone_bounds, crime_types, ...
             synth = gen_fn(n=int(inject_count), zone_bounds=zone_info["bounds"], crime_types=crime_types if crime_types else None)
         else:
-            # fallback to simple generator that only takes n (generate_random_records)
             gen_fn = getattr(data_module, 'generate_random_records')
             synth = gen_fn(int(inject_count))
-
-        # use the session adder available in the module
-        add_fn = getattr(data_module, 'add_records_to_session')
-        add_fn(synth)
-        st.sidebar.success(f'{len(synth)} registros generados en {zone_name}')
-        st.rerun()
+        # Convertir DataFrame a lista de dicts para insertar en PostgreSQL
+        records = synth.to_dict(orient='records')
+        try:
+            insert_crimes(records)
+            st.sidebar.success(f'{len(records)} registros sintéticos insertados en PostgreSQL')
+        except Exception as e:
+            st.sidebar.error(f'Error al insertar en PostgreSQL: {e}')
+    # Botón para actualizar la base con los últimos 5000 registros reales
+    st.sidebar.markdown("### 🔄 Actualizar Base de Datos")
+    if st.sidebar.button('Actualizar con últimos 5000 de Chicago (PostgreSQL)'):
+        try:
+            # Descargar y guardar en PostgreSQL
+            df_chicago = data_module.fetch_latest(limit=5000)
+            records = df_chicago.to_dict(orient='records')
+            insert_crimes(records)
+            st.sidebar.success(f'Se insertaron/actualizaron {len(records)} registros en PostgreSQL')
+        except Exception as e:
+            st.sidebar.error(f'Error al actualizar base: {e}')
     
     # Gestión de base de datos
     st.sidebar.markdown("---")
@@ -137,7 +148,7 @@ def admin_panel():
     
     return zone_name, zone_info
 
-def public_view():
+def public_view() -> None:
     """Vista pública sin controles de administrador"""
     st.sidebar.info(" Vista Pública")
     st.sidebar.markdown("Los datos se actualizan automáticamente")
@@ -146,7 +157,7 @@ def public_view():
     if st.sidebar.button("Acceso Administrador"):
         st.rerun()
 
-def app():
+def app() -> None:
     st.set_page_config(
         page_title='Sistema de Alertas - Arequipa',
         layout='wide',

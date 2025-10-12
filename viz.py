@@ -1,19 +1,20 @@
 import streamlit as st
 import pandas as pd
+from typing import Any
 try:
     import pydeck as pdk
-    PDK_AVAILABLE = True
+    PDK_AVAILABLE: bool = True
 except Exception:
-    PDK_AVAILABLE = False
+    PDK_AVAILABLE: bool = False
 
 
-def show_primary_type_bar(df: pd.DataFrame):
+def show_primary_type_bar(df: pd.DataFrame) -> None:
     st.subheader('Conteo por Primary Type')
     counts = df['primary_type'].fillna('UNKNOWN').value_counts().rename_axis('primary_type').reset_index(name='counts')
     st.bar_chart(counts.set_index('primary_type'))
 
 
-def show_map_points_and_heat(df: pd.DataFrame, heat_threshold: int = 50):
+def show_map_points_and_heat(df: pd.DataFrame, heat_threshold: int = 50) -> None:
     st.subheader('Mapa de puntos y calor')
     mdf = df.dropna(subset=['latitude', 'longitude']).copy()
     if mdf.empty:
@@ -61,7 +62,7 @@ def show_map_points_and_heat(df: pd.DataFrame, heat_threshold: int = 50):
         st.write('No se pudo calcular hotspots:', e)
 
 
-def show_additional_charts(df: pd.DataFrame):
+def show_additional_charts(df: pd.DataFrame) -> None:
     st.subheader('Top 10 ubicaciones')
     try:
         top = df['location_description'].fillna('UNKNOWN').value_counts().head(10)

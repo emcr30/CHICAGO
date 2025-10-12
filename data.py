@@ -6,18 +6,18 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional, Tuple
 import streamlit as st
 
-SCODA_URL = "https://data.cityofchicago.org/resource/ijzp-q8t2.json"
-DEFAULT_FROM_DATE = "2024-01-01T00:00:00"
+SCODA_URL: str = "https://data.cityofchicago.org/resource/ijzp-q8t2.json"
+DEFAULT_FROM_DATE: str = "2024-01-01T00:00:00"
 
-SCHEMA_COLUMNS = [
+SCHEMA_COLUMNS: List[str] = [
     'id', 'case_number', 'date', 'block', 'iucr', 'primary_type',
     'description', 'location_description', 'arrest', 'domestic', 'beat',
     'district', 'ward', 'community_area', 'fbi_code', 'year', 'updated_on',
     'x_coordinate', 'y_coordinate', 'latitude', 'longitude', 'location'
 ]
 
-# Tipos de crimen para Arequipa (adaptados al contexto local)
-CRIME_TYPES_AREQUIPA = {
+# Tipos de crimen para Arequipa 
+CRIME_TYPES_AREQUIPA: Dict[str, List[str]] = {
     'ROBO': ['Robo con violencia', 'Robo de vehículo', 'Robo a transeúnte'],
     'ASALTO': ['Asalto y lesiones', 'Agresión física', 'Riña callejera'],
     'HURTO': ['Hurto simple', 'Hurto de celular', 'Carterismo'],
@@ -26,7 +26,7 @@ CRIME_TYPES_AREQUIPA = {
     'ESTAFA': ['Fraude', 'Estafa telefónica', 'Clonación de tarjetas'],
 }
 
-LOCATIONS_AREQUIPA = [
+LOCATIONS_AREQUIPA: List[str] = [
     'CALLE', 'AVENIDA', 'PARQUE', 'PLAZA', 'TIENDA', 'RESTAURANTE',
     'RESIDENCIA', 'BANCO', 'MERCADO', 'TRANSPORTE PÚBLICO', 'ESTACIONAMIENTO'
 ]
@@ -45,13 +45,12 @@ def _records_to_dataframe(records: List[Dict[str, Any]]) -> pd.DataFrame:
     for coord in ['latitude', 'longitude']:
         if coord in df.columns:
             df[coord] = pd.to_numeric(df[coord], errors='coerce')
+    if 'location' in df.columns:
+        df['location'] = df['location'].apply(lambda x: str(x) if not pd.isna(x) else None)
     return df[SCHEMA_COLUMNS]
 
 
 def fetch_latest(limit: int = 5000, force: bool = False, refresh_interval: int = 60) -> pd.DataFrame:
-    """Return the latest `limit` records (ordered by date DESC).
-    Caches in Streamlit session state for `refresh_interval` seconds unless `force` is True.
-    """
     key_time = '_chicago_last_fetch_time'
     key_df = '_chicago_last_df'
     key_chicago = '_chicago_base_df'
@@ -82,11 +81,18 @@ def fetch_latest(limit: int = 5000, force: bool = False, refresh_interval: int =
     
     if not arequipa_df.empty:
         combined_df = pd.concat([arequipa_df, chicago_df], ignore_index=True)
-        # Ordenar por fecha descendente
-        if 'date' in combined_df.columns:
-            combined_df = combined_df.sort_values('date', ascending=False)
     else:
         combined_df = chicago_df
+
+    # Convertir columna 'year' a número para evitar error Arrow
+    if 'year' in combined_df.columns:
+        combined_df['year'] = pd.to_numeric(combined_df['year'], errors='coerce').astype('Int64')
+
+    # Ordenar por fecha descendente
+    if 'date' in combined_df.columns:
+        combined_df = combined_df.sort_values('date', ascending=False)
+
+
     
     st.session_state[key_df] = combined_df
     return combined_df
@@ -192,7 +198,7 @@ def generate_random_records_in_zone(
 
 
 def generate_random_records(n: int, base_lat: Optional[float] = None, base_lon: Optional[float] = None) -> pd.DataFrame:
-    """Versión original - genera registros aleatorios simples."""
+    ##Versión original - genera registros aleatorios simples
     rows = []
     now = datetime.utcnow()
     for i in range(n):
@@ -232,7 +238,7 @@ def generate_random_records(n: int, base_lat: Optional[float] = None, base_lon: 
 def persist_dataframe_to_sqlite(df: pd.DataFrame, db_path: str = 'chicago.db', table: str = 'crimes') -> None:
     import sqlite3
     
-    # Convert location dict to string if present
+    # Convertir el diccionario a una cadena
     if 'location' in df.columns and df['location'].dtype == 'object':
         df['location'] = df['location'].apply(lambda x: str(x) if isinstance(x, dict) else x)
     
@@ -274,3 +280,5 @@ def clear_arequipa_records() -> None:
     """Limpia los registros sintéticos de Arequipa de la sesión."""
     if '_arequipa_records' in st.session_state:
         del st.session_state['_arequipa_records']
+
+

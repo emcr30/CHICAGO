@@ -1,10 +1,11 @@
+
 import json
 import hashlib
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Union
 import streamlit as st
 
-USERS_PATH = Path('users.json')
+USERS_PATH: Path = Path('users.json')
 
 
 def _hash_password(password: str) -> str:
@@ -13,8 +14,6 @@ def _hash_password(password: str) -> str:
 
 def load_users() -> Dict[str, Any]:
     if not USERS_PATH.exists():
-        # create default admin user (change password after first run)
-        # default password set to 'admin123' to match previous UI expectations
         default = {'admin': {'password_hash': _hash_password('admin123'), 'is_admin': True}}
         save_users(default)
         return default
@@ -77,7 +76,7 @@ def admin_login_ui() -> bool:
     return False
 
 
-def admin_logout():
+def admin_logout() -> None:
     """Logout admin session."""
     if 'is_admin' in st.session_state:
         st.session_state['is_admin'] = False
@@ -86,6 +85,6 @@ def admin_logout():
     # don't rerun here; caller can rerun if desired
 
 
-def current_admin() -> str | None:
+def current_admin() -> Optional[str]:
     """Return username of logged admin or None."""
     return st.session_state.get('_admin_user')

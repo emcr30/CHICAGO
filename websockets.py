@@ -8,15 +8,17 @@ import json
 from datetime import datetime
 import requests
 
+from typing import Optional, Any, Dict, List
+
 class SecurityAlertsClient:
-    def __init__(self, user_id: str, server_url: str = "ws://localhost:8000"):
-        self.user_id = user_id
-        self.server_url = f"{server_url}/ws/{user_id}"
-        self.api_url = server_url.replace("ws://", "http://").replace("wss://", "https://")
-        self.websocket = None
-        self.running = False
+    def __init__(self, user_id: str, server_url: str = "ws://localhost:8000") -> None:
+        self.user_id: str = user_id
+        self.server_url: str = f"{server_url}/ws/{user_id}"
+        self.api_url: str = server_url.replace("ws://", "http://").replace("wss://", "https://")
+        self.websocket: Optional[Any] = None
+        self.running: bool = False
     
-    async def connect(self):
+    async def connect(self) -> bool:
         """Conecta al servidor WebSocket"""
         try:
             self.websocket = await websockets.connect(self.server_url)
@@ -27,26 +29,24 @@ class SecurityAlertsClient:
             return False
         return True
     
-    async def send_location(self, latitude: float, longitude: float):
+    async def send_location(self, latitude: float, longitude: float) -> None:
         """Envía ubicación actual al servidor"""
         if not self.websocket:
             return
-        
-        message = {
+        message: Dict[str, Any] = {
             "type": "location_update",
             "latitude": latitude,
             "longitude": longitude,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
         await self.websocket.send(json.dumps(message))
         print(f"📍 Ubicación enviada: ({latitude}, {longitude})")
     
-    async def listen_for_alerts(self):
+    async def listen_for_alerts(self) -> None:
         """Escucha alertas en tiempo real"""
         try:
             async for message in self.websocket:
-                data = json.loads(message)
+                data: Dict[str, Any] = json.loads(message)
                 await self.handle_message(data)
         except websockets.exceptions.ConnectionClosed:
             print("⚠️ Conexión cerrada")
@@ -55,31 +55,25 @@ class SecurityAlertsClient:
             print(f"❌ Error al escuchar: {e}")
             self.running = False
     
-    async def handle_message(self, data: dict):
+    async def handle_message(self, data: Dict[str, Any]) -> None:
         """Procesa mensajes recibidos del servidor"""
-        msg_type = data.get("type")
-        
+        msg_type: Optional[str] = data.get("type")
         if msg_type == "connection":
             print(f"🔗 {data.get('message')}")
-        
         elif msg_type == "new_alert":
-            alert = data.get("alert", {})
+            alert: Dict[str, Any] = data.get("alert", {})
             print(f"\n🚨 NUEVA ALERTA:")
             print(f"   Tipo: {alert.get('primary_type')}")
             print(f"   Descripción: {alert.get('description')}")
             print(f"   Ubicación: ({alert.get('latitude')}, {alert.get('longitude')})")
             print(f"   Hora: {alert.get('timestamp')}\n")
-            
-            # Aquí la app móvil mostraría una notificación push
             self.show_notification(alert)
-        
         elif msg_type == "location_confirmed":
             print(f"✓ {data.get('message')}")
-        
         elif msg_type == "pong":
             print("💓 Keepalive OK")
     
-    def show_notification(self, alert: dict):
+    def show_notification(self, alert: Dict[str, Any]) -> None:
         """Simula notificación push en móvil"""
         print("=" * 50)
         print("📱 NOTIFICACIÓN PUSH")
@@ -87,7 +81,7 @@ class SecurityAlertsClient:
         print(f"📍 {alert.get('description')}")
         print("=" * 50)
     
-    async def send_ping(self):
+    async def send_ping(self) -> None:
         """Envía ping para mantener conexión activa"""
         while self.running:
             try:
@@ -96,7 +90,7 @@ class SecurityAlertsClient:
             except:
                 break
     
-    def get_nearby_alerts(self, latitude: float, longitude: float, radius_km: float = 2.0):
+    def get_nearby_alerts(self, latitude: float, longitude: float, radius_km: float = 2.0) -> List[Dict[str, Any]]:
         """Obtiene alertas cercanas vía API REST"""
         try:
             response = requests.post(
@@ -110,39 +104,28 @@ class SecurityAlertsClient:
                 headers={"Authorization": "Bearer user_token"},
                 timeout=10
             )
-            
             if response.status_code == 200:
                 data = response.json()
                 print(f"\n📍 Alertas cercanas (radio {radius_km}km):")
                 print(f"   Total: {data['count']}")
-                
                 for alert in data['alerts'][:5]:  # Mostrar primeras 5
                     print(f"   - {alert['primary_type']}: {alert.get('distance_km', 0):.2f}km")
-                
                 return data['alerts']
             else:
                 print(f"❌ Error al obtener alertas: {response.status_code}")
                 return []
-        
         except Exception as e:
             print(f"❌ Error: {e}")
             return []
     
-    async def run(self, user_latitude: float, user_longitude: float):
+    async def run(self, user_latitude: float, user_longitude: float) -> None:
         """Ejecuta el cliente de forma continua"""
         if not await self.connect():
             return
-        
-        # Enviar ubicación inicial
         await self.send_location(user_latitude, user_longitude)
-        
-        # Obtener alertas cercanas
         self.get_nearby_alerts(user_latitude, user_longitude, radius_km=2.0)
-        
-        # Crear tareas concurrentes
         listen_task = asyncio.create_task(self.listen_for_alerts())
         ping_task = asyncio.create_task(self.send_ping())
-        
         try:
             await asyncio.gather(listen_task, ping_task)
         except KeyboardInterrupt:
@@ -154,7 +137,7 @@ class SecurityAlertsClient:
 
 
 # Ejemplo de uso
-async def main():
+async def main() -> None:
     print("""
     ╔═══════════════════════════════════════════════════════════╗
     ║     📱 Cliente de Alertas de Seguridad - Arequipa        ║
