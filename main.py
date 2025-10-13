@@ -1,15 +1,23 @@
+""""Panel principal del sistema CRIMENGO.
+
+Permite el control de la interfaz pública y de administrador para visualizar,
+generar y administrar registros de crímenes en Arequipa.
+
+@imports Importa módulos para manejo de datos, visualización, autenticación
+y conexión a base de datos PostgreSQL.
+
+@returns Inicializa y ejecuta la aplicación principal de Streamlit.
+"""
 import streamlit as st
 import pandas as pd
 import requests
 from typing import Any, Tuple
 try:
-    # prefer package imports when running from repo root
     import CHICAGO.data as data_module
     from CHICAGO.viz import show_primary_type_bar, show_map_points_and_heat, show_additional_charts
     from CHICAGO.auth import admin_login_ui, admin_logout
     from CHICAGO.db_postgres import insert_crimes
 except Exception:
-    # fallback to local imports when running inside CHICAGO/ folder
     import data as data_module
     from viz import show_primary_type_bar, show_map_points_and_heat, show_additional_charts
     from auth import admin_login_ui, admin_logout
@@ -18,7 +26,7 @@ import inspect
 
 DEFAULT_LIMIT: int = 5000
 
-# Definir zonas de Arequipa
+# Definición de zonas de Arequipa con sus coordenadas
 AREQUIPA_ZONES: dict[str, dict[str, Any]] = {
     "Centro Histórico": {
         "bounds": [
@@ -40,15 +48,19 @@ AREQUIPA_ZONES: dict[str, dict[str, Any]] = {
     }
 }
 
-# admin auth is handled by auth.admin_login_ui() and auth.admin_logout()
+
+#Panel de control del administrador.
+
+#Permite generar datos sintéticos, actualizar la base de datos PostgreSQL,
+#guardar o limpiar datos locales, y exportar archivos CSV.
+
+#returns Una tupla con el nombre de la zona seleccionada y su información.
 
 def admin_panel() -> Tuple[str, dict[str, Any]]:
-    """Panel de control para administradores"""
     st.sidebar.markdown("---")
     st.sidebar.success("✅ Sesión: Administrador")
     
     if st.sidebar.button("Cerrar Sesión"):
-        # use auth helper to clear admin session
         admin_logout()
         st.experimental_rerun()
     
@@ -78,25 +90,23 @@ def admin_panel() -> Tuple[str, dict[str, Any]]:
         default=['ROBO', 'ASALTO', 'HURTO']
     )
     if st.sidebar.button('🎲 Generar Datos en Zona (PostgreSQL)'):
-        # Generar datos sintéticos y guardarlos en PostgreSQL
         if hasattr(data_module, 'generate_random_records_in_zone'):
             gen_fn = getattr(data_module, 'generate_random_records_in_zone')
             synth = gen_fn(n=int(inject_count), zone_bounds=zone_info["bounds"], crime_types=crime_types if crime_types else None)
         else:
             gen_fn = getattr(data_module, 'generate_random_records')
             synth = gen_fn(int(inject_count))
-        # Convertir DataFrame a lista de dicts para insertar en PostgreSQL
         records = synth.to_dict(orient='records')
         try:
             insert_crimes(records)
             st.sidebar.success(f'{len(records)} registros sintéticos insertados en PostgreSQL')
         except Exception as e:
             st.sidebar.error(f'Error al insertar en PostgreSQL: {e}')
-    # Botón para actualizar la base con los últimos 5000 registros reales
+    
+    # Actualizar base con registros reales
     st.sidebar.markdown("### 🔄 Actualizar Base de Datos")
     if st.sidebar.button('Actualizar con últimos 5000 de Chicago (PostgreSQL)'):
         try:
-            # Descargar y guardar en PostgreSQL
             df_chicago = data_module.fetch_latest(limit=5000)
             records = df_chicago.to_dict(orient='records')
             insert_crimes(records)
@@ -104,16 +114,15 @@ def admin_panel() -> Tuple[str, dict[str, Any]]:
         except Exception as e:
             st.sidebar.error(f'Error al actualizar base: {e}')
     
-    # Gestión de base de datos
+    # Gestión de base de datos local
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Base de Datos")
     
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        if st.button('Guardar', use_container_width=True):
+        if st.button('Guardar', width='stretch'):
             df = st.session_state.get('_chicago_last_df', pd.DataFrame())
             if not df.empty:
-                # persist using function from data module
                 persist_fn = getattr(data_module, 'persist_dataframe_to_sqlite')
                 persist_fn(df)
                 st.sidebar.success(' Guardado')
@@ -121,7 +130,7 @@ def admin_panel() -> Tuple[str, dict[str, Any]]:
                 st.sidebar.warning('No hay datos')
     
     with col2:
-        if st.button('Limpiar', use_container_width=True):
+        if st.button('Limpiar', width='stretch'):
             import os
             try:
                 os.remove('chicago.db')
@@ -131,7 +140,7 @@ def admin_panel() -> Tuple[str, dict[str, Any]]:
             except Exception as e:
                 st.sidebar.error(f'Error: {e}')
     
-    # Exportar datos
+    # Exportar datos a CSV
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 📤 Exportar Datos")
     
@@ -143,19 +152,32 @@ def admin_panel() -> Tuple[str, dict[str, Any]]:
             data=csv,
             file_name=f"crimenes_arequipa_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
             mime="text/csv",
-            use_container_width=True
+            width='stretch'
         )
     
     return zone_name, zone_info
 
+
+#Vista pública del sistema (sin controles de administrador).
+
+#Permite a los usuarios visualizar los datos generales y acceder
+#al botón de inicio de sesión para administradores.
+
 def public_view() -> None:
-    """Vista pública sin controles de administrador"""
     st.sidebar.info(" Vista Pública")
     st.sidebar.markdown("Los datos se actualizan automáticamente")
     
-    # Botón de login discreto
+    # Botón para acceder como administrador
     if st.sidebar.button("Acceso Administrador"):
         st.rerun()
+
+
+#Función principal de la aplicación Streamlit.
+
+#Controla la configuración general, autenticación, visualización de métricas,
+#gráficos, mapas y tablas de datos de los crímenes en Arequipa.
+
+#@returns None. Renderiza toda la interfaz principal.
 
 def app() -> None:
     st.set_page_config(
@@ -166,10 +188,10 @@ def app() -> None:
     
     st.title('CRIMENGO')
     
-    # Verificar si es admin
+    # Verificar autenticación de administrador
     is_admin = admin_login_ui()
     
-    # Mostrar panel correspondiente
+    # Mostrar panel adecuado según rol
     if is_admin:
         zone_name, zone_info = admin_panel()
     else:
@@ -177,7 +199,7 @@ def app() -> None:
         zone_name = "Centro Histórico"
         zone_info = AREQUIPA_ZONES[zone_name]
     
-    # Configuración de datos
+    # Configuración lateral de parámetros
     with st.sidebar:
         st.markdown("---")
         st.subheader("📡 Configuración")
@@ -196,7 +218,7 @@ def app() -> None:
             auto_refresh = True
             force_refresh = False
     
-    # Obtener datos
+    # Obtener datos actualizados
     fetch_fn = getattr(data_module, 'fetch_latest')
     df = fetch_fn(
         limit=int(limit),
@@ -204,7 +226,7 @@ def app() -> None:
         refresh_interval=60 if auto_refresh else 999999
     )
     
-    # Métricas principales
+    # Mostrar métricas principales
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -225,7 +247,7 @@ def app() -> None:
         domestic = df['domestic'].sum() if 'domestic' in df.columns else 0
         st.metric("Domésticos", int(domestic))
     
-    # Tabs para organizar contenido
+    # Secciones con pestañas (mapa, estadísticas, datos)
     tab1, tab2, tab3 = st.tabs(["Mapa", "Estadísticas", "Datos"])
     
     with tab1:
@@ -242,7 +264,7 @@ def app() -> None:
     with tab3:
         st.subheader("Tabla de Datos")
         
-        # Filtros
+        # Filtros interactivos
         col1, col2 = st.columns(2)
         with col1:
             if 'primary_type' in df.columns:
@@ -262,16 +284,17 @@ def app() -> None:
         
         st.dataframe(
             df,
-            use_container_width=True,
+            width='stretch',
             height=400
         )
         
-        # Info adicional solo para admin
+        # Información técnica solo visible para admin
         if is_admin:
             with st.expander("ℹ️ Información Técnica"):
                 st.write("**Columnas disponibles:**", list(df.columns))
                 st.write("**Registros nulos por columna:**")
                 st.write(df.isnull().sum())
+
 
 if __name__ == '__main__':
     app()
