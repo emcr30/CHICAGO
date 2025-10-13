@@ -2,16 +2,14 @@ import os
 import psycopg2
 from psycopg2.extras import execute_values
 from typing import Any, List, Dict, Optional
-from dotenv import load_dotenv
 
-load_dotenv()
-
-PG_HOST: str = os.getenv("PG_HOST", "")
-PG_DBNAME: str = os.getenv("PG_DBNAME", "")
-PG_USER: str = os.getenv("PG_USER", "")
-PG_PASSWORD: str = os.getenv("PG_PASSWORD", "")
-PG_PORT: str = os.getenv("PG_PORT", "5432")
-PG_SSLMODE: str = os.getenv("PG_SSLMODE", "require")
+# Configuración directa para Azure PostgreSQL (ajusta estos valores a los de tu base de datos)
+PG_HOST: str = "chic2025.postgres.database.azure.com"  # ejemplo: chicagodb.postgres.database.azure.com
+PG_DBNAME: str = "postgres"
+PG_USER: str = "chic1"  
+PG_PASSWORD: str = "Atlantis31"
+PG_PORT: str = "5432"
+PG_SSLMODE: str = "require"
 
 
 def get_pg_conn() -> psycopg2.extensions.connection:
