@@ -32,3 +32,6 @@ Siguientes pasos sugeridos
 - Añadir autenticación (si el servicio se publica en la nube).
 - Mover persistencia a Postgres en la nube y añadir ETL programado para mantener datos recientes.
 - Mejorar visualizaciones con Plotly o Kepler for large geospatial views.
+
+Se puede visualizar la web ingresando al siguiente enlace:
+[CRIMEN GO](https://crimengo.azurewebsites.net/)
