@@ -1,0 +1,79 @@
+{
+  "info": {
+    "name": "CRIMENGO API",
+    "_postman_id": "crimengo-api",
+    "description": "Colección mínima para probar la API de CRIMENGO",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/health",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Records",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/records?limit=100",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "records"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "100"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Post Records (single)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": \"API-TEST-1\",\n  \"case_number\": \"AQP202500000\",\n  \"date\": \"2025-11-17T12:00:00Z\",\n  \"primary_type\": \"ROBO\",\n  \"description\": \"Test insert from API\",\n  \"latitude\": -16.424,\n  \"longitude\": -71.556\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/records",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "records"
+          ]
+        }
+      }
+    }
+  ]
+}

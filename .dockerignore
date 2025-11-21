@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+.vscode/
+*.db
+*.sqlite
+.chicago.db
+.DS_Store
+.git
+.gitignore
