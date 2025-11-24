@@ -90,18 +90,21 @@ def admin_panel() -> Tuple[str, dict[str, Any]]:
         default=['ROBO', 'ASALTO', 'HURTO']
     )
     if st.sidebar.button('🎲 Generar Datos en Zona (PostgreSQL)'):
-        if hasattr(data_module, 'generate_random_records_in_zone'):
-            gen_fn = getattr(data_module, 'generate_random_records_in_zone')
-            synth = gen_fn(n=int(inject_count), zone_bounds=zone_info["bounds"], crime_types=crime_types if crime_types else None)
-        else:
-            gen_fn = getattr(data_module, 'generate_random_records')
-            synth = gen_fn(int(inject_count))
-        records = synth.to_dict(orient='records')
         try:
+            # Generar datos sintéticos en la zona seleccionada
+            if hasattr(data_module, 'generate_random_records_in_zone'):
+                gen_fn = getattr(data_module, 'generate_random_records_in_zone')
+                synth = gen_fn(n=int(inject_count), zone_bounds=zone_info["bounds"], crime_types=crime_types if crime_types else None)
+            else:
+                gen_fn = getattr(data_module, 'generate_random_records')
+                synth = gen_fn(int(inject_count))
+            
+            # Insertar en base de datos (Postgres o SQLite según DB_MODE)
+            records = synth.to_dict(orient='records')
             insert_crimes(records)
-            st.sidebar.success(f'{len(records)} registros sintéticos insertados en PostgreSQL')
+            st.sidebar.success(f'{len(records)} registros generados e insertados en base de datos')
         except Exception as e:
-            st.sidebar.error(f'Error al insertar en PostgreSQL: {e}')
+            st.sidebar.error(f'Error al generar/insertar: {e}')
     
     # Actualizar base con registros reales
     st.sidebar.markdown("### 🔄 Actualizar Base de Datos")
@@ -282,10 +285,20 @@ def app() -> None:
                 if show_arrests:
                     df = df[df['arrest'] == True]
         
+        # Ajustar la altura de la tabla para mostrar más filas generadas
+        try:
+            rows_count = len(df)
+        except Exception:
+            rows_count = 0
+        per_row_px = 32
+        max_height = 1200
+        min_height = 400
+        desired_height = min(max_height, max(min_height, per_row_px * rows_count + 140))
+
         st.dataframe(
             df,
             width='stretch',
-            height=400
+            height=int(desired_height)
         )
         
         # Información técnica solo visible para admin

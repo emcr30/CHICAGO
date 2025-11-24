@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# DB_MODE: 'sqlite' (default) or 'postgres'
+# DB_MODE
 DB_MODE = os.getenv('DB_MODE', 'sqlite').lower()
 
 # Postgres settings (used only if DB_MODE == 'postgres')
@@ -60,10 +60,8 @@ def _init_sqlite() -> None:
 
 
 if DB_MODE == 'sqlite':
-    # Ensure DB and table exist
     _init_sqlite()
 else:
-    # Lazy import of psycopg2 only when needed
     import psycopg2
     from psycopg2.extras import execute_values
     
@@ -109,11 +107,10 @@ else:
         finally:
             conn.close()
 
-    # Ensure table exists on startup when using Postgres
     try:
         _init_postgres()
     except Exception:
-        # Don't crash import if DB unreachable; errors will surface when using DB.
+        
         pass
 
 
@@ -132,9 +129,9 @@ def insert_crimes(records: List[Dict[str, Any]]) -> None:
     def _normalize_value(v: Any) -> Any:
         if v is None:
             return None
-        # pandas.Timestamp -> convert to python datetime then to ISO
+        
         try:
-            # pandas Timestamp has to_pydatetime()
+            
             if hasattr(v, 'to_pydatetime'):
                 v = v.to_pydatetime()
         except Exception:
@@ -149,7 +146,6 @@ def insert_crimes(records: List[Dict[str, Any]]) -> None:
                 return json.dumps(v)
             except Exception:
                 return str(v)
-        # numpy types or other numeric types - let sqlite handle them
         return v
 
     def _enforce_recent_date(rec: Dict[str, Any]) -> None:
@@ -159,7 +155,6 @@ def insert_crimes(records: List[Dict[str, Any]]) -> None:
         updates 'updated_on' to now, and adjusts 'year'.
         """
         now = datetime.utcnow()
-        # ensure at least 1 hour earlier, allow up to 1h59m59s earlier
         extra_minutes = random.randint(0, 59)
         extra_seconds = random.randint(0, 59)
         new_date = now - timedelta(hours=1, minutes=extra_minutes, seconds=extra_seconds)
@@ -170,12 +165,10 @@ def insert_crimes(records: List[Dict[str, Any]]) -> None:
         except Exception:
             rec['year'] = now.year
 
-    # Enforce recent timestamps for all records before normalization
     for r in records:
         try:
             _enforce_recent_date(r)
         except Exception:
-            # don't fail the whole batch if date enforcement fails for one record
             pass
 
     if DB_MODE == 'sqlite':
@@ -191,7 +184,7 @@ def insert_crimes(records: List[Dict[str, Any]]) -> None:
             conn.close()
         return
 
-    # Postgres path
+    # Postgres 
     conn = psycopg2.connect(
         host=PG_HOST,
         dbname=PG_DBNAME,
@@ -202,7 +195,6 @@ def insert_crimes(records: List[Dict[str, Any]]) -> None:
     )
     try:
         with conn.cursor() as cur:
-            # Normalize values for psycopg2 (convert pandas timestamps)
             def _pg_norm(v: Any) -> Any:
                 try:
                     if hasattr(v, 'to_pydatetime'):

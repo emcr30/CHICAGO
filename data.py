@@ -31,6 +31,19 @@ LOCATIONS_AREQUIPA: List[str] = [
     'RESIDENCIA', 'BANCO', 'MERCADO', 'TRANSPORTE PÚBLICO', 'ESTACIONAMIENTO'
 ]
 
+# Puntos preferidos para Universidad La Salle (lat, lon)
+LA_SALLE_POINTS: List[Tuple[float, float]] = [
+    (-16.423975, -71.556786),
+    (-16.424471, -71.556401),
+    (-16.424227, -71.556866),
+    (-16.424114, -71.556010),
+    (-16.424556, -71.556401),
+    (-16.424389, -71.556388),
+    (-16.424106, -71.556958),
+    (-16.423952, -71.557043),
+    (-16.423903, -71.556985),
+]
+
 
 def _records_to_dataframe(records: List[Dict[str, Any]]) -> pd.DataFrame:
     if not records:
@@ -141,16 +154,72 @@ def generate_random_records_in_zone(
     zone_bounds: List[Tuple[float, float]],
     crime_types: Optional[List[str]] = None,
     days_back: int = 30,
-    store_in_session: bool = True
+    store_in_session: bool = True,
+    preferred_points: Optional[List[Tuple[float, float]]] = None,
+    preferred_label: str = 'UNIVERSIDAD LA SALLE',
+    preferred_ratio: float = 0.45,
+    allow_other_zones: bool = True,
 ) -> pd.DataFrame:
 
     rows = []
     now = datetime.utcnow()
-    
     if crime_types is None:
         crime_types = list(CRIME_TYPES_AREQUIPA.keys())
+
+    if preferred_points is None:
+        preferred_points = LA_SALLE_POINTS
+
+    # Determine how many records should use preferred points
+    preferred_count = max(0, round(n * preferred_ratio))
+    if preferred_count > n:
+        preferred_count = n
+
+    base_ts = int(time.time() * 1000)
     
-    for i in range(n):
+    # First generate preferred records (may repeat points)
+    for i in range(preferred_count):
+        lat, lon = random.choice(preferred_points)
+
+        # build the record
+        record_index = i
+        days_ago = random.randint(0, days_back)
+        hours_ago = random.randint(0, 23)
+        minutes_ago = random.randint(0, 59)
+        record_date = now - timedelta(days=days_ago, hours=hours_ago, minutes=minutes_ago)
+
+        primary = random.choice(crime_types)
+        description = random.choice(CRIME_TYPES_AREQUIPA.get(primary, ['Incidente']))
+
+        row = {
+            'id': f'ARQ-{base_ts}-{record_index}',
+            'case_number': f'AQP{record_date.year}{record_index:06d}',
+            'date': record_date.isoformat(),
+            'block': f'{random.choice(["AV", "CALLE", "JR"])} {random.randint(100, 999)}',
+            'iucr': f'{random.randint(1000, 9999)}',
+            'primary_type': primary,
+            'description': description,
+            'location_description': preferred_label,
+            'arrest': random.random() < 0.15,
+            'domestic': random.random() < 0.25 if primary == 'VIOLENCIA FAMILIAR' else random.random() < 0.05,
+            'beat': f'{random.randint(100, 999)}',
+            'district': f'{random.randint(1, 10):02d}',
+            'ward': f'{random.randint(1, 29)}',
+            'community_area': f'{random.randint(1, 77)}',
+            'fbi_code': None,
+            'year': record_date.year,
+            'updated_on': now.isoformat(),
+            'x_coordinate': None,
+            'y_coordinate': None,
+            'latitude': lat,
+            'longitude': lon,
+            'location': f'({lat}, {lon})'
+        }
+        rows.append(row)
+
+    # Generate remaining records within the zone (or other zones if allowed)
+    remaining = n - preferred_count
+    for j in range(remaining):
+        i = preferred_count + j
         # Generar coordenadas dentro de la zona
         lat, lon = _generate_point_in_bounds(zone_bounds)
         
@@ -165,7 +234,7 @@ def generate_random_records_in_zone(
         record_date = now - timedelta(days=days_ago, hours=hours_ago, minutes=minutes_ago)
         
         row = {
-            'id': f'ARQ-{int(time.time()*1000)}-{i}',
+            'id': f'ARQ-{base_ts + i}-{i}',
             'case_number': f'AQP{record_date.year}{i:06d}',
             'date': record_date.isoformat(),
             'block': f'{random.choice(["AV", "CALLE", "JR"])} {random.randint(100, 999)}',
