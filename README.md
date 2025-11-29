@@ -35,7 +35,7 @@ Siguientes pasos sugeridos
 - Mejorar visualizaciones con Plotly o Kepler for large geospatial views.
 
 Se puede visualizar la web ingresando al siguiente enlace:
-[CRIMEN GO](https://crimengo.azurewebsites.net/)
+[CRIMEN GO](https://crimengo2025.azurewebsites.net/)
 
 ## Uso de Docker
 
