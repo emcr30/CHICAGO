@@ -324,5 +324,46 @@ Si deseas, puedo:
 - Añadir autenticación básica por API key a `api.py`.
 - Crear un `Dockerfile` optimizado sólo para API y publicarlo en Docker Hub.
 - Añadir persistencia por defecto en `docker-compose.yml` para SQLite (volumen host) y confirmar que los datos sobreviven reinicios.
+# Chicago Crime Alert - Alerta Arequipa
 
+Sistema de alertas de seguridad en tiempo real para Android.
+
+## 📱 Descargar APK
+
+[**Descargar última versión**](https://github.com/emcr30/CHICAGO/releases/latest)
+
+## 🚀 Características
+
+- ✅ Monitoreo en tiempo real de zonas peligrosas
+- ✅ Alertas sonoras basadas en proximidad
+- ✅ Visualización en mapa interactivo
+- ✅ Detección automática de ubicación
+- ✅ Niveles de peligro (Bajo, Medio, Alto)
+
+## 📥 Instalación
+
+1. Descarga el APK desde [Releases](https://github.com/emcr30/CHICAGO/releases)
+2. Permite la instalación de fuentes desconocidas en tu dispositivo Android
+3. Instala el APK
+4. Otorga los permisos solicitados (ubicación, notificaciones)
+
+## 🔧 Requisitos
+
+- Android 8.0 (API 26) o superior
+- GPS activado
+- Conexión a internet
+
+## 🛠️ Desarrollo
+
+### Estructura del proyecto
+```
+android-app/       - Aplicación Android (Kotlin)
+releases/         - APKs compilados
+```
+## 👥 Autores
+
+- Marycielo Guadalupe Bedoya Pinto
+- Kenny Luis Flores Chacón
+- Angela Milagros Quispe Huanca
+- Evelyn Milagros Chipana Ramos
 Fin del README.
