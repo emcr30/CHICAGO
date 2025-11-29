@@ -180,6 +180,70 @@ Contenido del repositorio (archivos clave añadidos/actualizados)
 - `postman_collection.json` — colección mínima para probar la API localmente.
 - `.env` — variables de entorno (no subir a repositorio público). Ejemplo de contenido en secciones abajo.
 
+Estructura del Repositorio
+---------------------------
+
+```
+CHICAGO (raíz del proyecto)
+│
+├── Core - Backend API
+│   ├── api.py              - API REST Flask con endpoints CRUD
+│   ├── db_postgres.py      - Abstracción de BD (SQLite/Postgres)
+│   ├── auth.py             - Autenticación y manejo de usuarios
+│   └── users.json          - Base de datos de usuarios (dev)
+│
+├── Frontend - Interfaz Streamlit
+│   ├── main.py             - Aplicación principal Streamlit (UI/Admin)
+│   ├── data.py             - Lógica de datos y consumo de API Chicago
+│   ├── viz.py              - Funciones de visualización (mapas, gráficos)
+│   └── notify_config.json  - Configuración de notificaciones
+│
+├── Docker & Deployment
+│   ├── Dockerfile          - Imagen principal (nginx + gunicorn + streamlit)
+│   ├── Dockerfile.api      - Imagen separada para API Flask
+│   ├── Dockerfile.streamlit - Imagen separada para UI Streamlit
+│   ├── docker-compose.yml  - Orquestación multi-contenedor
+│   ├── start.sh            - Script de arranque para contenedor
+│   ├── nginx.conf          - Configuración proxy nginx
+│   └── supervisord.conf    - Configuración supervisord (deprecated, usar start.sh)
+│
+├── Configuración
+│   ├── requirements.txt    - Dependencias Python (pip)
+│   ├── .env                - Variables de entorno (no subir a git)
+│   ├── .dockerignore       - Archivos a excluir en build Docker
+│   └── .gitignore          - Archivos a excluir en git
+│
+├── Documentación & Testing
+│   ├── README.md           - Documentación completa (este archivo)
+│   ├── postman_collection.json - Ejemplos de API endpoints
+│   └── __pycache__/        - Caché Python (ignorado en git)
+│
+└── Datos
+    ├── chicago.db          - Base de datos SQLite local (opcional)
+    └── data/               - Carpeta para almacenamiento persistente
+
+**Nota sobre archivos legacy:**
+- `supervisord.conf`: Usado en versiones anteriores; ahora se usa `start.sh` para arranque en Docker.
+- `Dockerfile.api` y `Dockerfile.streamlit`: Disponibles para ejecutar servicios por separado con `docker run`.
+  Si usas `docker-compose up`, se recomienda usar `docker-compose.yml` que gestiona ambos servicios.
+```
+
+**Descripción de módulos clave:**
+
+| Archivo/Carpeta | Propósito | Lenguaje |
+|---|---|---|
+| `main.py` | Interfaz Streamlit interactiva para visualización y admin | Python |
+| `api.py` | API REST Flask (GET/POST/PUT/DELETE) | Python |
+| `data.py` | Consumo de API Chicago + generador de datos sintéticos | Python |
+| `viz.py` | Visualizaciones (mapas interactivos, gráficos) | Python |
+| `db_postgres.py` | Capa de abstracción: SQLite (default) / Postgres | Python |
+| `auth.py` | Sistema de autenticación básico | Python |
+| `Dockerfile` | Imagen única con nginx + gunicorn + streamlit | Dockerfile |
+| `docker-compose.yml` | Orquestación de servicios (compose v2) | YAML |
+| `nginx.conf` | Proxy inverso: rutea `/` a Streamlit y `/api/` a Flask | Nginx config |
+| `start.sh` | Script que inicia gunicorn, streamlit y nginx | Shell script |
+| `requirements.txt` | Dependencias: streamlit, flask, pandas, psycopg2, etc. | Plain text |
+
 Uso con Docker Compose (recomendado para desarrollo local)
 ------------------------------------------------------
 
