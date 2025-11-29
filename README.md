@@ -21,6 +21,7 @@ Ejecutar localmente
 ```bash
 streamlit run main.py
 ```
+En la primera versión
 
 Notas sobre volumen de datos y despliegue en la nube
 
@@ -36,6 +37,69 @@ Siguientes pasos sugeridos
 Se puede visualizar la web ingresando al siguiente enlace:
 [CRIMEN GO](https://crimengo.azurewebsites.net/)
 
+## Uso de Docker
+
+**1. Construir y ejecutar la API Flask:**
+
+```bash
+docker build -f Dockerfile.api -t api-test .
+docker run -p 5002:5000 api-test
+```
+
+La API estará disponible en `http://localhost:5002/health`
+
+**2. Construir y ejecutar Streamlit:**
+
+```bash
+docker build -f Dockerfile.streamlit -t streamlit-test .
+docker run -p 8501:8501 streamlit-test
+```
+
+La UI estará disponible en `http://localhost:8501`
+
+Estructura del Repositorio
+---------------------------
+
+```
+CHICAGO (raíz del proyecto)
+│
+├── Core - Backend API
+│   ├── api.py              - API REST Flask con endpoints CRUD
+│   ├── db_postgres.py      - Abstracción de BD (SQLite/Postgres)
+│   ├── auth.py             - Autenticación y manejo de usuarios
+│   └── users.json          - Base de datos de usuarios (dev)
+│
+├── Frontend - Interfaz Streamlit
+│   ├── main.py             - Aplicación principal Streamlit (UI/Admin)
+│   ├── data.py             - Lógica de datos y consumo de API Chicago
+│   ├── viz.py              - Funciones de visualización (mapas, gráficos)
+│   └── notify_config.json  - Configuración de notificaciones
+│
+├── Docker & Deployment
+│   ├── Dockerfile          - Imagen principal (nginx + gunicorn + streamlit)
+│   ├── Dockerfile.api      - Imagen separada para API Flask
+│   ├── Dockerfile.streamlit - Imagen separada para UI Streamlit
+│   ├── docker-compose.yml  - Orquestación multi-contenedor
+│   ├── start.sh            - Script de arranque para contenedor
+│   ├── nginx.conf          - Configuración proxy nginx
+│   └── supervisord.conf    - Configuración supervisord (deprecated, usar start.sh)
+│
+├── Configuración
+│   ├── requirements.txt    - Dependencias Python (pip)
+│   ├── .env                - Variables de entorno (no subir a git)
+│   ├── .dockerignore       - Archivos a excluir en build Docker
+│   └── .gitignore          - Archivos a excluir en git
+│
+├── Documentación & Testing
+│   ├── README.md           - Documentación completa (este archivo)
+│   ├── postman_collection.json - Ejemplos de API endpoints
+│   └── __pycache__/        - Caché Python (ignorado en git)
+│
+└── Datos
+    ├── chicago.db          - Base de datos SQLite local (opcional)
+    └── data/               - Carpeta para almacenamiento persistente
+
+
 ## API para app móvil
 
 Se añadió un servicio Flask que expone endpoints CRUD para que una app móvil inyecte y consulte registros.
@@ -47,41 +111,6 @@ Se añadió un servicio Flask que expone endpoints CRUD para que una app móvil 
 - `PUT /records/<id>` : actualizar/insertar un registro con id
 - `DELETE /records/<id>` : eliminar un registro
 
-Ejemplo rápido (local):
-
-```bash
-# Construir y levantar ambos servicios (API y Streamlit)
-docker-compose up --build
-
-# Probar health
-curl http://localhost:5000/health
-```
-
-Si al ejecutar `docker-compose up --build` obtienes un error similar a:
-
-```
-Error response from daemon: ports are not available: exposing port TCP 0.0.0.0:5000 -> 127.0.0.1:0: listen tcp 0.0.0.0:5000: bind: address already in use
-```
-significa que el puerto `5000` ya está ocupado en tu máquina.
-
-Opciones para resolverlo:
-
-- Liberar el puerto (buscar y detener el proceso que lo usa):
-
-```bash
-# Ver el proceso que está escuchando en 5000
-sudo lsof -iTCP:5000 -sTCP:LISTEN -Pn
-
-# Matar el proceso (reemplaza <PID> por el PID mostrado)
-kill -9 <PID>
-```
-
-- Cambiar el puerto host que usa el servicio API editando el archivo `.env` y añadiendo (por ejemplo):
-
-```dotenv
-API_HOST_PORT=5001
-STREAMLIT_HOST_PORT=8501
-```
 
 El `docker-compose.yml` usa por defecto `API_HOST_PORT=5001` si no defines `.env`, así evita choques con servicios que usen `5000`.
 
