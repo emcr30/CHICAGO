@@ -201,6 +201,31 @@ docker-compose up --build api
 docker-compose up --build streamlit
 ```
 
+Uso con Docker Run (ejecutar por separado)
+-------------------------------------------
+
+Si prefieres levantar los servicios de forma manual con `docker run`, ejecuta desde la raíz del proyecto:
+
+**1. Construir y ejecutar la API Flask:**
+
+```bash
+docker build -f Dockerfile.api -t api-test .
+docker run -p 5002:5000 api-test
+```
+
+La API estará disponible en `http://localhost:5002/health`
+
+**2. Construir y ejecutar Streamlit:**
+
+```bash
+docker build -f Dockerfile.streamlit -t streamlit-test .
+docker run -p 8501:8501 streamlit-test
+```
+
+La UI estará disponible en `http://localhost:8501`
+
+**Nota:** Los puertos `5002` y `8501` son ejemplos; puedes cambiarlos según tus necesidades reemplazando los números antes del `:` en las banderas `-p`.
+
 Usar la imagen desde Docker Hub
 -------------------------------
 
