@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/azul_principal"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Alerta Sonora"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white" />
+
+    <!-- Visualización de ondas sonoras -->
+    <ImageView
+        android:layout_width="200dp"
+        android:layout_height="150dp"
+        android:layout_marginTop="32dp"
+        android:src="@android:drawable/ic_lock_silent_mode_off"
+        app:tint="@android:color/white" />
+
+    <!-- Volumen -->
+    <TextView
+        android:id="@+id/tvVolumen"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="Volumen de Alerta"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"/>
+
+    <SeekBar
+        android:id="@+id/seekBarVolumen"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:max="100"
+        android:progress="80"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Recibirás alertas auditivas cuando se detecte un evento"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:gravity="center"/>
+
+    <!-- Switch de sonido -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Activar Sonido"
+            android:textSize="16sp"
+            android:textColor="@android:color/white"/>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchSonido"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"/>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/descripcionSonido"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Recibirás alertas auditivas cuando se detecte un evento"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:gravity="center"/>
+
+    <Button
+        android:id="@+id/btnProbarAlerta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="Probar Alerta"
+        android:textSize="16sp"
+        android:padding="16dp"
+        android:backgroundTint="@android:color/white"
+        android:textColor="@color/azul_principal"/>
+
+    <Button
+        android:id="@+id/btnVolver"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Volver"
+        android:textSize="16sp"
+        android:padding="16dp"
+        android:backgroundTint="@android:color/transparent"
+        android:textColor="@android:color/white"/>
+
+</LinearLayout>

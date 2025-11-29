@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Activar Detección"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"/>
+
+    <TextView
+        android:id="@+id/estadoDeteccion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="Detección Activa"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/holo_green_dark"/>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchDeteccion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:scaleX="1.5"
+        android:scaleY="1.5"/>
+
+    <TextView
+        android:id="@+id/descripcionEstado"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="Mantén esta opción activa para recibir alertas en tiempo real"
+        android:textSize="16sp"
+        android:textColor="@color/gris_texto"
+        android:gravity="center"/>
+
+    <Button
+        android:id="@+id/btnVolver"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:text="Volver"
+        android:textSize="16sp"
+        android:padding="16dp"
+        android:backgroundTint="@color/azul_boton"/>
+
+</LinearLayout>

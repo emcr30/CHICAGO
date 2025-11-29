@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/azul_principal"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Permisos de Ubicación"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Necesitamos acceso a tu ubicación para enviar alertas precisas"
+        android:textSize="16sp"
+        android:textColor="@android:color/white"
+        android:gravity="center"/>
+
+    <TextView
+        android:id="@+id/estadoPermisos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="✗ Permisos pendientes"
+        android:textSize="18sp"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"/>
+
+    <Button
+        android:id="@+id/btnSolicitarPermisos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="Solicitar Permiso"
+        android:textSize="16sp"
+        android:padding="16dp"
+        android:backgroundTint="@android:color/white"
+        android:textColor="@color/azul_principal"/>
+
+    <Button
+        android:id="@+id/btnConfigurar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Abrir Configuración"
+        android:textSize="16sp"
+        android:padding="16dp"
+        android:backgroundTint="@android:color/white"
+        android:textColor="@color/azul_principal"/>
+
+    <Button
+        android:id="@+id/btnCancelar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Cancelar"
+        android:textSize="16sp"
+        android:padding="16dp"
+        android:backgroundTint="@android:color/transparent"
+        android:textColor="@android:color/white"/>
+
+</LinearLayout>

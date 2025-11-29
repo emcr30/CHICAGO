@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Alertas Seguridad</string>
+
+    <!-- Permisos -->
+    <string name="permisos_titulo">Permisos de Ubicación</string>
+    <string name="permisos_descripcion">Necesitamos acceso a tu ubicación para enviar alertas precisas</string>
+    <string name="solicitar_permiso">Solicitar Permiso</string>
+    <string name="cancelar">Cancelar</string>
+
+    <!-- Detección -->
+    <string name="activar_deteccion">Activar Detección</string>
+    <string name="deteccion_activa">Detección Activa</string>
+    <string name="deteccion_inactiva">Detección Inactiva</string>
+    <string name="mantener_activa">Mantén esta opción activa para recibir alertas en tiempo real</string>
+
+    <!-- Mapa -->
+    <string name="monitoreo_tiempo_real">Monitoreo en Tiempo Real</string>
+    <string name="monitoreo_activo">Monitoreo Activo</string>
+    <string name="ultima_actualizacion">Última actualización: %s</string>
+
+    <!-- Alerta Sonora -->
+    <string name="alerta_sonora">Alerta Sonora</string>
+    <string name="volumen_alerta">Volumen de Alerta</string>
+    <string name="activar_sonido">Activar Sonido</string>
+    <string name="alertas_auditivas">Recibirás alertas auditivas cuando se detecte un evento</string>
+
+    <!-- Reconocimiento -->
+    <string name="reconocimiento_alerta">Reconocimiento de Alerta</string>
+    <string name="tipo_incendio">Incendio</string>
+    <string name="tipo_deslizamiento">Deslizamiento</string>
+    <string name="tipo_terremoto">Terremoto</string>
+    <string name="revisa_alertas">Revisa las alertas detectadas recientemente</string>
+    <string name="ver_detalles">Ver Detalles</string>
+
+    <!-- Botones -->
+    <string name="volver">Volver</string>
+    <string name="probar_alerta">Probar Alerta</string>
+    <string name="actualizar">Actualizar</string>
+
+    <!-- Notificaciones -->
+    <string name="zona_peligrosa_cercana">Zona Peligrosa Cercana</string>
+    <string name="distancia_metros">%dm de distancia</string>
+
+    <!-- Mensajes -->
+    <string name="error_conexion">Error de conexión</string>
+    <string name="cargando">Cargando...</string>
+    <string name="permisos_ubicaci">Permisos de Ubicación</string>
+    <string name="acceso">Necesitamos acceso a tu ubicación para enviar alertas precisas</string>
+    <string name="activar_detecci_n">Activar Detección</string>
+    <string name="detecci_n_activa">Detección Activa</string>
+    <string name="monitoreo_en_tiempo_real">Monitoreo en Tiempo Real</string>
+    <string name="ver_mapa_con_zonas_peligrosas">Ver mapa con zonas peligrosas</string>
+    <string name="alerta">Alerta Sonora</string>
+    <string name="configurar_alertas_auditivas">Configurar alertas auditivas</string>
+</resources>
