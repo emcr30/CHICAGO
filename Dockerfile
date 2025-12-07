@@ -17,5 +17,9 @@ COPY . /app
 # Expose port
 EXPOSE 8000
 
-# Run API with gunicorn on Railway's PORT
-CMD gunicorn -w 4 -b 0.0.0.0:$PORT --timeout 120 api:app
+# Copy startup script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+# Run startup script
+CMD ["/app/start.sh"]
