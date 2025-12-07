@@ -17,5 +17,5 @@ COPY . /app
 # Expose port
 EXPOSE 8000
 
-# Run API with gunicorn on fixed port
-CMD exec gunicorn -w 4 -b 0.0.0.0:8000 --timeout 120 api:app
+# Run API with gunicorn on Railway's PORT
+CMD gunicorn -w 4 -b 0.0.0.0:$PORT --timeout 120 api:app
