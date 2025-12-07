@@ -5,15 +5,5 @@
   },
   "deploy": {
     "startCommand": "gunicorn -w 4 -b 0.0.0.0:${PORT} --timeout 120 api:app"
-  },
-  "services": {
-    "web": {
-      "dockerfile": "Dockerfile.railway",
-      "startCommand": "gunicorn -w 4 -b 0.0.0.0:${PORT} --timeout 120 api:app"
-    },
-    "dashboard": {
-      "dockerfile": "Dockerfile.railway",
-      "startCommand": "streamlit run main.py --server.port=${PORT} --server.address=0.0.0.0 --logger.level=error"
-    }
   }
 }
