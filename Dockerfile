@@ -15,11 +15,11 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . /app
 
 # Expose port
-EXPOSE 8000
+EXPOSE 5000
 
 # Copy startup script
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
-# Run startup script
-CMD ["/app/start.sh"]
+# Run using Procfile
+CMD ["bash", "-c", "gunicorn -b 0.0.0.0:${PORT:-5000} api:app"]
