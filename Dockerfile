@@ -17,9 +17,5 @@ COPY . /app
 # Expose port
 EXPOSE 5000
 
-# Copy startup script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-
-# Run using Procfile
-CMD ["bash", "-c", "gunicorn -b 0.0.0.0:${PORT:-5000} api:app"]
+# Run gunicorn on fixed port 5000
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "api:app"]
