@@ -1,0 +1,33 @@
+#!/usr/bin/expect -f
+
+# Script para automatizar railway login en macOS
+# Este script abre el navegador automáticamente
+
+set timeout 30
+
+# Iniciar railway login
+spawn railway login
+
+# Esperar el mensaje de "Press Enter to open the browser"
+expect {
+    "Press Enter to open the browser" {
+        send "\r"
+        puts "✅ Abierto navegador para autenticación..."
+    }
+    "Logging in..." {
+        puts "⏳ Esperando autenticación en el navegador..."
+        expect "✅" { send "\r" }
+    }
+}
+
+# Esperar confirmación de login
+expect {
+    timeout {
+        puts "❌ Timeout esperando autenticación"
+        exit 1
+    }
+    eof {
+        puts "✅ Login completado"
+        exit 0
+    }
+}

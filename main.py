@@ -8,10 +8,18 @@ y conexión a base de datos PostgreSQL.
 
 @returns Inicializa y ejecuta la aplicación principal de Streamlit.
 """
+import os
 import streamlit as st
 import pandas as pd
 import requests
 from typing import Any, Tuple
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# URL de la API Flask (configurable por variable de entorno)
+API_URL = os.getenv("API_URL", "http://localhost:5000")
+
 try:
     import CHICAGO.data as data_module
     from CHICAGO.viz import show_primary_type_bar, show_map_points_and_heat, show_additional_charts
