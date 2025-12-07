@@ -1,28 +1,21 @@
 FROM python:3.11-slim
 
-# Instala dependencias del sistema
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y build-essential gcc libpq-dev nginx supervisor && \
+    apt-get install -y build-essential gcc libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copia requirements y dependencias Python
+# Copy requirements and install Python dependencies
 COPY requirements.txt ./
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copia el código de la app
+# Copy application code
 COPY . /app
 
-# Copia configs de nginx y supervisord
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Expose port
+EXPOSE 8000
 
-# Ajusta permisos para streamlit
-RUN chmod -R 777 /tmp
-
-# Expone solo el puerto 80 (nginx)
-EXPOSE 80
-
-# Comando de arranque: supervisord (levanta gunicorn y streamlit), nginx en foreground
-CMD service nginx start && supervisord -c /etc/supervisor/conf.d/supervisord.conf
+# Run API with gunicorn on fixed port
+CMD exec gunicorn -w 4 -b 0.0.0.0:8000 --timeout 120 api:app
