@@ -18,5 +18,5 @@ COPY . /app
 # Expose port (Railway will assign PORT env var)
 EXPOSE 8000
 
-# Run API with gunicorn
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "--timeout", "120", "api:app"]
+# Run API with gunicorn (Railway sets PORT environment variable)
+CMD exec gunicorn -w 4 -b 0.0.0.0:${PORT:-8000} --timeout 120 api:app
